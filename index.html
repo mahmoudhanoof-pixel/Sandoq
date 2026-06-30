@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="صندوق">
+<title>صندوق — إدارة الصندوق</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+:root{
+  --navy:#0F1D38;--navy2:#1A2E52;--gold:#C8A84B;--gold2:#E8C96A;--golddim:#C8A84B18;
+  --bg:#F4F2ED;--card:#fff;--text:#0F1D38;--sub:#7C8A9E;--border:#E8E4DC;
+  --green:#0A7A4E;--red:#C0392B;--orange:#B07020;
+  --try:#1A6B8A;--usd:#1A4A8B;--syp:#2A6B4A;
+  --r:12px;--sh:0 1px 8px rgba(15,29,56,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'IBM Plex Sans Arabic','Geeza Pro',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;padding-bottom:72px;}
+
+/* ══ HEADER ══ */
+.hdr{background:var(--navy);padding:50px 16px 0;position:sticky;top:0;z-index:100;}
+.hdr-top{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;}
+.logo{font-size:22px;font-weight:700;color:var(--gold);}
+.logo-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:1px;}
+.hdr-bal{text-align:left;}
+.hdr-bal .v{font-size:20px;font-weight:700;color:var(--gold2);line-height:1;}
+.hdr-bal .l{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px;}
+
+/* Balance strip */
+.bal-strip{display:flex;border-top:1px solid rgba(255,255,255,.08);padding:10px 0;}
+.bs{flex:1;text-align:center;}
+.bs .v{font-size:13px;font-weight:700;}
+.bs .l{font-size:9px;color:rgba(255,255,255,.4);margin-top:1px;}
+.bs.try .v{color:#5BC8E8;}
+.bs.usd .v{color:#7EB3FF;}
+.bs.syp .v{color:#7EDBA8;}
+
+/* ══ NAV ══ */
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--navy);
+  border-top:1px solid rgba(255,255,255,.07);display:flex;padding-bottom:env(safe-area-inset-bottom);}
+.ntab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 0;border:none;background:none;color:rgba(255,255,255,.4);
+  font-size:10px;font-family:inherit;font-weight:500;cursor:pointer;transition:color .15s;}
+.ntab .ni{font-size:20px;line-height:1;}
+.ntab.on{color:var(--gold);}
+.ntab.on .nb{background:var(--gold);}
+.nb{height:2px;width:24px;border-radius:1px;background:transparent;margin-top:2px;}
+
+/* ══ PAGE ══ */
+.page{display:none;}.page.on{display:block;}
+.content{padding:14px;}
+
+/* ══ BUTTONS ══ */
+.fab{position:fixed;bottom:72px;left:50%;transform:translateX(-50%);
+  background:var(--gold);color:var(--navy);border:none;border-radius:28px;
+  padding:13px 32px;font-size:15px;font-weight:700;font-family:inherit;
+  cursor:pointer;box-shadow:0 4px 18px rgba(200,168,75,.4);z-index:190;
+  display:flex;align-items:center;gap:7px;white-space:nowrap;}
+.btn{padding:9px 16px;border-radius:8px;border:none;font-size:13px;font-weight:600;
+  font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
+.btn-navy{background:var(--navy);color:var(--gold);}
+.btn-out{background:none;border:1.5px solid var(--border);color:var(--text);}
+.btn-red{background:#FBE8E8;color:var(--red);border:none;}
+.btn-sm{padding:6px 10px;font-size:12px;}
+
+/* ══ CARDS ══ */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:14px 16px;margin-bottom:10px;}
+.card-title{font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;}
+
+/* ══ STAT GRID ══ */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.stat-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:12px 14px;border-right:3px solid var(--border);}
+.stat-card.in{border-right-color:var(--green);}
+.stat-card.out{border-right-color:var(--red);}
+.stat-card.bal{border-right-color:var(--gold);}
+.stat-v{font-size:16px;font-weight:700;}
+.stat-l{font-size:10px;color:var(--sub);margin-top:2px;}
+
+/* ══ TRANSACTION ENTRY ══ */
+.entry{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);
+  padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;
+  border-right:3px solid var(--border);}
+.entry.in{border-right-color:var(--green);}
+.entry.out{border-right-color:var(--red);}
+.entry-icon{font-size:22px;flex-shrink:0;}
+.entry-info{flex:1;min-width:0;}
+.entry-desc{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.entry-meta{font-size:11px;color:var(--sub);margin-top:2px;}
+.entry-right{text-align:left;flex-shrink:0;}
+.entry-amt{font-size:15px;font-weight:700;}
+.entry-amt.in{color:var(--green);}
+.entry-amt.out{color:var(--red);}
+.entry-cur{font-size:10px;color:var(--sub);margin-top:1px;}
+.entry-del{background:none;border:none;font-size:16px;cursor:pointer;color:var(--sub);padding:2px;margin-right:4px;}
+
+/* ══ DATE SECTION ══ */
+.date-sep{font-size:11px;font-weight:700;color:var(--sub);padding:8px 0 4px;
+  border-bottom:1px solid var(--border);margin-bottom:8px;}
+
+/* ══ FILTER TABS ══ */
+.ftabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
+.ftabs::-webkit-scrollbar{display:none;}
+.ftab{flex-shrink:0;padding:6px 14px;border-radius:18px;border:1.5px solid var(--border);
+  background:var(--card);color:var(--sub);font-size:12px;font-family:inherit;font-weight:600;cursor:pointer;}
+.ftab.on{background:var(--navy);color:var(--gold);border-color:var(--navy);}
+
+/* ══ CURRENCY BADGE ══ */
+.cur-try{background:#E8F4F8;color:var(--try);font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;}
+.cur-usd{background:#E8EEF8;color:var(--usd);font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;}
+.cur-syp{background:#E8F4EE;color:var(--syp);font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;}
+
+/* ══ MODAL ══ */
+.ov{position:fixed;inset:0;background:rgba(5,12,28,.6);z-index:300;
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s;}
+.ov.on{opacity:1;pointer-events:all;}
+.sheet{background:var(--card);width:100%;max-width:520px;border-radius:20px 20px 0 0;
+  padding:18px 18px 38px;transform:translateY(100%);
+  transition:transform .26s cubic-bezier(.32,.82,.42,1);max-height:94dvh;overflow-y:auto;}
+.ov.on .sheet{transform:translateY(0);}
+.shandle{width:36px;height:3px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
+.stitle{font-size:18px;font-weight:700;margin-bottom:18px;text-align:center;}
+
+/* ══ FORM ══ */
+.f{margin-bottom:12px;}
+.f label{display:block;font-size:11px;font-weight:700;color:var(--sub);margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px;}
+.f input,.f select,.f textarea{width:100%;padding:11px 13px;border:1.5px solid var(--border);
+  border-radius:10px;font-size:15px;font-family:inherit;color:var(--text);background:var(--bg);
+  appearance:none;-webkit-appearance:none;outline:none;transition:border-color .15s;}
+.f input:focus,.f select:focus{border-color:var(--gold);background:#fff;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* TYPE SELECTOR */
+.type-sel{display:flex;gap:8px;margin-bottom:14px;}
+.type-btn{flex:1;padding:12px;border-radius:10px;border:2px solid var(--border);
+  background:var(--bg);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;text-align:center;}
+.type-btn.in.on{background:#E8F4EE;border-color:var(--green);color:var(--green);}
+.type-btn.out.on{background:#FBE8E8;border-color:var(--red);color:var(--red);}
+
+/* ══ REPORT ══ */
+.rep-table{width:100%;border-collapse:collapse;font-size:13px;}
+.rep-table thead tr{background:var(--navy);}
+.rep-table thead th{padding:9px 10px;color:var(--gold);font-weight:600;text-align:right;white-space:nowrap;}
+.rep-table tbody tr{border-bottom:1px solid var(--border);}
+.rep-table tbody tr:last-child{border-bottom:none;}
+.rep-table td{padding:9px 10px;vertical-align:middle;}
+.rep-table tfoot tr{background:var(--bg);}
+.rep-table tfoot td{padding:9px 10px;font-weight:700;border-top:2px solid var(--border);}
+.tbl-wrap{border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;overflow-x:auto;}
+
+/* ══ EMPTY ══ */
+.empty{text-align:center;padding:50px 20px;color:var(--sub);}
+.empty-ic{font-size:40px;margin-bottom:10px;}
+
+/* ══ CONFIRM ══ */
+.cfm{position:fixed;inset:0;background:rgba(5,12,28,.65);z-index:400;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .18s;}
+.cfm.on{opacity:1;pointer-events:all;}
+.cfm-box{background:#fff;border-radius:16px;padding:24px 20px;max-width:300px;width:100%;text-align:center;}
+.cfm-box h3{font-size:17px;margin-bottom:8px;}
+.cfm-box p{font-size:13px;color:var(--sub);margin-bottom:18px;}
+.cfm-btns{display:flex;gap:8px;}
+
+/* ══ AUTOCOMPLETE ══ */
+.acdrop{display:none;position:absolute;top:100%;right:0;left:0;background:#fff;
+  border:1.5px solid var(--gold);border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.1);
+  z-index:500;max-height:180px;overflow-y:auto;margin-top:3px;}
+.acitem{padding:10px 13px;font-size:14px;cursor:pointer;border-bottom:1px solid var(--border);}
+.acitem:last-child{border-bottom:none;}
+.acitem:active{background:var(--golddim);}
+/* ══ PRINT ══ */
+@media print{.nav,.fab,.hdr{display:none!important;}body{padding:0;background:#fff;}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-top">
+    <div>
+      <div class="logo" style="display:flex;align-items:center;gap:8px;"><span style="font-size:26px;font-weight:700;color:var(--gold);font-family:serif;">ق</span><div><div style="font-size:18px;font-weight:700;color:var(--gold);line-height:1;">قلم</div><div style="font-size:11px;color:var(--gold2);font-weight:600;letter-spacing:1px;">صندوق</div></div></div>
+      <div class="logo-sub">إدارة حركة الصندوق</div>
+    </div>
+    <div class="hdr-bal">
+      <div class="v" id="hdrBal">0</div>
+      <div class="l">الرصيد الإجمالي ($)</div>
+    </div>
+  </div>
+  <div class="bal-strip">
+    <div class="bs try"><div class="v" id="balTRY">0</div><div class="l">ليرة تركية ₺</div></div>
+    <div class="bs usd"><div class="v" id="balUSD">0</div><div class="l">دولار $</div></div>
+    <div class="bs syp"><div class="v" id="balSYP">0</div><div class="l">ليرة سورية ل.س</div></div>
+  </div>
+</div>
+
+<!-- PAGES -->
+<div class="page on" id="pHome"><div class="content" id="homeContent"></div></div>
+<div class="page" id="pTxns"><div class="content" id="txnsContent"></div></div>
+<div class="page" id="pRep"><div class="content" id="repContent"></div></div>
+<div class="page" id="pStmt"><div class="content" id="stmtContent"></div></div>
+<div class="page" id="pSettings"><div class="content" id="settContent"></div></div>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="ntab on" id="n0" onclick="go('home')"><span class="ni">🏠</span><span>الرئيسية</span><span class="nb"></span></button>
+  <button class="ntab" id="n1" onclick="go('txns')"><span class="ni">📋</span><span>الحركات</span><span class="nb"></span></button>
+  <button class="ntab" id="n2" onclick="go('rep')"><span class="ni">📊</span><span>التقارير</span><span class="nb"></span></button>
+  <button class="ntab" id="n4" onclick="go('stmt')"><span class="ni">📑</span><span>كشف</span><span class="nb"></span></button>
+  <button class="ntab" id="n3" onclick="go('settings')"><span class="ni">⚙️</span><span>الإعدادات</span><span class="nb"></span></button>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fabBtn" onclick="openForm()">＋ إضافة حركة</button>
+
+<!-- FORM MODAL -->
+<div class="ov" id="ovForm" onclick="if(event.target===this)closeForm()">
+  <div class="sheet">
+    <div class="shandle"></div>
+    <div class="stitle" id="formTitle">حركة جديدة</div>
+
+    <!-- Type selector -->
+    <div class="type-sel">
+      <button class="type-btn in on" id="typeIn" onclick="setType('in')">↓ مقبوضات</button>
+      <button class="type-btn out" id="typeOut" onclick="setType('out')">↑ مدفوعات</button>
+      <button class="type-btn" id="typeExch" style="border-color:var(--orange);color:var(--orange);" onclick="setType('exch')">⇄ تصريف</button>
+    </div>
+
+    <div class="f">
+      <label>البيان / الوصف *</label>
+      <div style="position:relative;"><input type="text" id="fDesc" placeholder="مثال: إيجار، راتب، بيع..." oninput="showDescSuggestions()" onblur="hideDescSuggestions()" style="width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:inherit;color:var(--text);background:var(--bg);appearance:none;outline:none;"><div class="acdrop" id="descDrop"></div></div>
+    </div>
+
+    <div class="frow">
+      <div class="f">
+        <label>المبلغ *</label>
+        <input type="number" id="fAmt" placeholder="0" inputmode="decimal" oninput="calcEquiv()">
+      </div>
+      <div class="f">
+        <label>العملة</label>
+        <select id="fCur" onchange="calcEquiv()">
+          <option value="USD">دولار ($)</option>
+          <option value="TRY">ليرة تركية (₺)</option>
+          <option value="SYP">ليرة سورية (ل.س)</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="f">
+        <label>سعر الصرف بالدولار</label>
+        <input type="text" id="fRate" placeholder="1" value="1" oninput="calcEquiv()">
+      </div>
+      <div class="f">
+        <label>ما يعادل بالدولار</label>
+        <input type="text" id="fEquiv" readonly placeholder="0.00" style="background:var(--golddim);color:var(--navy);font-weight:700;">
+      </div>
+    </div>
+
+    <div class="frow">
+      <div class="f">
+        <label>التاريخ</label>
+        <input type="date" id="fDate">
+      </div>
+      <div class="f">
+        <label>التصنيف</label>
+        <select id="fCat">
+          <option value="">— عام —</option>
+          <option>إيجار</option>
+          <option>رواتب</option>
+          <option>مبيعات</option>
+          <option>مشتريات</option>
+          <option>مصاريف إدارية</option>
+          <option>خدمات</option>
+          <option>تحويل</option>
+          <option>أخرى</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="exchSection" style="display:none;background:var(--golddim);border:1.5px solid rgba(200,168,75,.3);border-radius:12px;padding:14px;margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:10px;">⇄ تفاصيل التصريف</div>
+      <div class="frow">
+        <div class="f">
+          <label>العملة المباعة</label>
+          <select id="fExchFrom">
+            <option value="TRY">ليرة تركية ₺</option>
+            <option value="USD">دولار $</option>
+            <option value="SYP">ليرة سورية ل.س</option>
+          </select>
+        </div>
+        <div class="f">
+          <label>المبلغ المباع</label>
+          <input type="number" id="fExchAmtFrom" placeholder="0" inputmode="decimal" oninput="calcExch()">
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>العملة المشتراة</label>
+          <select id="fExchTo">
+            <option value="USD">دولار $</option>
+            <option value="TRY">ليرة تركية ₺</option>
+            <option value="SYP">ليرة سورية ل.س</option>
+          </select>
+        </div>
+        <div class="f">
+          <label>سعر الصرف</label>
+          <input type="text" id="fExchRate" placeholder="مثال: 34,5" inputmode="decimal" oninput="calcExch()" style="width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:inherit;color:var(--text);background:var(--bg);outline:none;">
+        </div>
+      </div>
+      <div style="background:var(--card);border-radius:8px;padding:10px 12px;text-align:center;">
+        <div style="font-size:11px;color:var(--sub);margin-bottom:3px;">المبلغ المستلم</div>
+        <div id="exchResult" style="font-size:18px;font-weight:700;color:var(--navy);">—</div>
+      </div>
+    </div>
+    <div class="f">
+      <label>ملاحظة (اختياري)</label>
+      <input type="text" id="fNote" placeholder="أي تفاصيل إضافية...">
+    </div>
+
+    <button style="width:100%;padding:14px;background:var(--navy);color:var(--gold);border:none;border-radius:12px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:6px;" onclick="saveEntry()">💾 حفظ</button>
+    <button style="width:100%;padding:12px;background:none;color:var(--sub);border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-family:inherit;cursor:pointer;margin-top:8px;" onclick="closeForm()">إلغاء</button>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="cfm" id="cfmOv">
+  <div class="cfm-box">
+    <h3>حذف الحركة؟</h3>
+    <p>لا يمكن التراجع عن هذا الإجراء.</p>
+    <div class="cfm-btns">
+      <button class="btn btn-red" onclick="confirmDel()" style="flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:700;">حذف</button>
+      <button class="btn btn-out" onclick="closeCfm()" style="flex:1;padding:12px;border-radius:10px;font-size:14px;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════
+// DATA
+// ══════════════════════════════
+const EK = 'sandoq_entries_v1';
+const SK = 'sandoq_settings_v1';
+let entries = JSON.parse(localStorage.getItem(EK)||'[]');
+let settings = JSON.parse(localStorage.getItem(SK)||'{"openingTRY":0,"openingUSD":0,"openingSYP":0,"name":"صندوقي"}');
+let curPage = 'home';
+let entryType = 'in';
+let delId = null;
+let filterCur = 'all';
+let filterType = 'all';
+let filterMonth = '';
+let editId = null;
+
+function saveEntries(){ localStorage.setItem(EK, JSON.stringify(entries)); }
+function saveSettings(){ localStorage.setItem(SK, JSON.stringify(settings)); }
+function genId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function fmt(n,cur){
+  const v=Math.abs(parseFloat(n)||0);
+  if(cur==='TRY') return `${v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} ₺`;
+  if(cur==='USD') return `$${v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  if(cur==='SYP') return `${v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})} ل.س`;
+  return v.toString();
+}
+function fmtD(d){ if(!d) return ''; const dt=new Date(d+'T12:00'); return dt.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}); }
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── BALANCE CALC ──
+function getBalance(cur){
+  const opening = parseFloat(settings['opening'+cur])||0;
+  const ins  = entries.filter(e=>e.cur===cur&&e.type==='in').reduce((s,e)=>s+(parseFloat(e.amt)||0),0);
+  const outs = entries.filter(e=>e.cur===cur&&e.type==='out').reduce((s,e)=>s+(parseFloat(e.amt)||0),0);
+  return opening + ins - outs;
+}
+
+function updateHeader(){
+  const try_=getBalance('TRY'), usd=getBalance('USD'), syp=getBalance('SYP');
+  document.getElementById('balTRY').textContent = try_.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('balUSD').textContent = usd.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('balSYP').textContent = syp.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+  document.getElementById('hdrBal').textContent = usd.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+// ── NAV ──
+function go(p){
+  curPage=p;
+  ['home','txns','rep','stmt','settings'].forEach((x,i)=>{
+    const pid='p'+x.charAt(0).toUpperCase()+x.slice(1);
+    const el=document.getElementById(pid); if(el) el.classList.toggle('on',x===p);
+    const nb=document.getElementById('n'+i); if(nb) nb.classList.toggle('on',x===p);
+  });
+  document.getElementById('fabBtn').style.display=(p==='settings'||p==='stmt')?'none':'flex';
+  renderPage();
+}
+
+function renderPage(){
+  updateHeader();
+  if(curPage==='home') renderHome();
+  if(curPage==='txns') renderTxns();
+  if(curPage==='rep') renderRep();
+  if(curPage==='settings') renderSettings();
+  if(curPage==='stmt') renderStmt();
+}
+
+// ══════════════════════════════
+// HOME PAGE
+// ══════════════════════════════
+function renderHome(){
+  const c = document.getElementById('homeContent');
+  const td = today();
+  let selDate = window._homeSelDate || td;
+
+  // Today stats per currency
+  function dayStat(cur){
+    const ins  = entries.filter(e=>e.date===td&&e.cur===cur&&e.type==='in').reduce((s,e)=>s+(parseFloat(e.amt)||0),0);
+    const outs = entries.filter(e=>e.date===td&&e.cur===cur&&e.type==='out').reduce((s,e)=>s+(parseFloat(e.amt)||0),0);
+    return {ins,outs};
+  }
+
+  const tryS=dayStat('TRY'), usdS=dayStat('USD'), sypS=dayStat('SYP');
+
+  // Last 10 entries
+  const recent=[...entries].sort((a,b)=>b.date>a.date?1:b.date<a.date?-1:0);
+
+  c.innerHTML=`
+  <!-- TODAY SUMMARY -->
+  <div class="card" style="background:var(--navy);padding:16px;">
+    <div style="font-size:11px;color:rgba(255,255,255,.4);font-weight:700;margin-bottom:10px;">ملخص اليوم</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      ${['TRY','USD','SYP'].map(cur=>{
+        const s=dayStat(cur);
+        const sym=cur==='TRY'?'₺':cur==='USD'?'$':'ل.س';
+        const clr=cur==='TRY'?'#5BC8E8':cur==='USD'?'#7EB3FF':'#7EDBA8';
+        return `<div style="text-align:center;background:rgba(255,255,255,.05);border-radius:8px;padding:10px 6px;">
+          <div style="font-size:10px;color:${clr};font-weight:700;margin-bottom:6px;">${cur} ${sym}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5);">↓ <span style="color:#6EDBA8;font-weight:600;">${fmt(s.ins,cur)}</span></div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:3px;">↑ <span style="color:#FF8A8A;font-weight:600;">${fmt(s.outs,cur)}</span></div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+
+  <!-- BALANCE CARDS -->
+  <div class="stat-grid">
+    ${['TRY','USD','SYP'].map(cur=>{
+      const bal=getBalance(cur), sym=cur==='TRY'?'₺':cur==='USD'?'$':'ل.س';
+      return `<div class="stat-card bal">
+        <div class="stat-v" style="color:${bal>=0?'var(--green)':'var(--red)'};">${fmt(bal,cur)}</div>
+        <div class="stat-l">رصيد ${cur} ${sym}</div>
+      </div>`;
+    }).join('')}
+    <div class="stat-card in">
+      <div class="stat-v">${entries.filter(e=>e.date===td).length}</div>
+      <div class="stat-l">حركات اليوم</div>
+    </div>
+  </div>
+
+  <!-- RECENT -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.4px;">الحركات</div>
+    <input type="date" value="${selDate}" onchange="window._homeSelDate=this.value;renderHome();" style="font-size:11px;padding:5px 9px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font-family:inherit;outline:none;">
+  </div>
+  ${recent.length===0?`<div class="empty"><div class="empty-ic">📋</div>لا توجد حركات في هذا اليوم<br><small>اضغط + لإضافة حركة جديدة</small></div>`:
+  recent.map(e=>entryHTML(e)).join('')}`;
+}
+
+// ══════════════════════════════
+// TRANSACTIONS PAGE
+// ══════════════════════════════
+function renderTxns(){
+  const c=document.getElementById('txnsContent');
+  let filtered=[...entries].sort((a,b)=>b.date>a.date?1:b.date<a.date?-1:0);
+  if(filterCur!=='all') filtered=filtered.filter(e=>e.cur===filterCur);
+  if(filterType!=='all') filtered=filtered.filter(e=>e.type===filterType);
+  if(filterMonth) filtered=filtered.filter(e=>e.date&&e.date.startsWith(filterMonth));
+
+  // Group by date
+  const groups={};
+  filtered.forEach(e=>{
+    if(!groups[e.date]) groups[e.date]=[];
+    groups[e.date].push(e);
+  });
+  const dates=Object.keys(groups).sort((a,b)=>b>a?1:-1);
+
+  const months=[...new Set(entries.map(e=>e.date?.slice(0,7)).filter(Boolean))].sort((a,b)=>b>a?1:-1);
+
+  c.innerHTML=`
+  <div class="ftabs">
+    <button class="ftab${filterCur==='all'?' on':''}" onclick="setFilter('cur','all')">الكل</button>
+    <button class="ftab${filterCur==='TRY'?' on':''}" onclick="setFilter('cur','TRY')">₺ ليرة</button>
+    <button class="ftab${filterCur==='USD'?' on':''}" onclick="setFilter('cur','USD')">$ دولار</button>
+    <button class="ftab${filterCur==='SYP'?' on':''}" onclick="setFilter('cur','SYP')">ل.س سوري</button>
+    <button class="ftab${filterType==='in'?' on':''}" onclick="setFilter('type','in')">↓ مقبوضات</button>
+    <button class="ftab${filterType==='out'?' on':''}" onclick="setFilter('type','out')">↑ مدفوعات</button>
+  </div>
+  <div class="f" style="margin-bottom:12px;">
+    <select onchange="setFilter('month',this.value)" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:13px;background:var(--card);outline:none;">
+      <option value="">كل الأشهر</option>
+      ${months.map(m=>`<option value="${m}" ${filterMonth===m?'selected':''}>${m}</option>`).join('')}
+    </select>
+  </div>
+  ${dates.length===0?`<div class="empty"><div class="empty-ic">🔍</div>لا توجد حركات</div>`:
+  dates.map(d=>`
+    <div class="date-sep">${fmtD(d)}</div>
+    ${groups[d].map(e=>entryHTML(e,true)).join('')}
+  `).join('')}`;
+}
+
+function setFilter(k,v){
+  if(k==='cur') filterCur=v;
+  if(k==='type'){ filterType = filterType===v?'all':v; }
+  if(k==='month') filterMonth=v;
+  renderTxns();
+}
+
+function entryHTML(e, showDel=false){
+  const curBadge = `<span class="cur-${e.cur.toLowerCase()}">${e.cur}</span>`;
+  const icon = e.type==='in' ? '↓' : '↑';
+  return `<div class="entry ${e.type}">
+    <div class="entry-icon">${icon}</div>
+    <div class="entry-info">
+      <div class="entry-desc">${esc(e.desc)}</div>
+      <div class="entry-meta">${e.cat?esc(e.cat)+' · ':''} ${e.date}${e.note?' · '+esc(e.note):''}</div>
+    </div>
+    <div class="entry-right">
+      <div class="entry-amt ${e.type}">${e.type==='in'?'+':'-'}${fmt(e.amt,e.cur)}</div>
+      <div class="entry-cur">${curBadge}${e.cur!=='USD'&&e.equiv?` <span style="font-size:10px;color:var(--usd);">≈$${parseFloat(e.equiv).toFixed(2)}</span>`:''}</div>
+    </div>
+    <button class="entry-del" onclick="openEdit('${e.id}')">✏️</button>
+  ${showDel?`<button class="entry-del" onclick="askDel('${e.id}')">🗑️</button>`:''}
+  </div>`;
+}
+
+// ══════════════════════════════
+// REPORTS PAGE
+// ══════════════════════════════
+function renderRep(){
+  const c=document.getElementById('repContent');
+  const MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+  // Monthly per currency
+  function monthlyStats(cur){
+    const months={};
+    entries.filter(e=>e.cur===cur).forEach(e=>{
+      const ym=e.date?.slice(0,7); if(!ym) return;
+      if(!months[ym]) months[ym]={in:0,out:0};
+      months[ym][e.type]+=(parseFloat(e.amt)||0);
+    });
+    return Object.entries(months).sort((a,b)=>b[0]>a[0]?1:-1).slice(0,12);
+  }
+
+  // Category breakdown
+  const catData={};
+  entries.forEach(e=>{
+    const k=`${e.cat||'عام'}_${e.type}_${e.cur}`;
+    if(!catData[k]) catData[k]={cat:e.cat||'عام',type:e.type,cur:e.cur,total:0};
+    catData[k].total+=parseFloat(e.amt)||0;
+  });
+  const cats=Object.values(catData).sort((a,b)=>b.total-a.total);
+
+  c.innerHTML=`
+  <button class="btn btn-navy" style="margin-bottom:14px;" onclick="printReport()">🖨️ طباعة التقرير</button>
+
+  <!-- BALANCE SUMMARY -->
+  <div class="card" id="repPrint">
+    <div class="card-title">ملخص الأرصدة</div>
+    <div class="tbl-wrap"><table class="rep-table">
+      <thead><tr><th>العملة</th><th>الرصيد الافتتاحي</th><th>إجمالي المقبوضات</th><th>إجمالي المدفوعات</th><th>الرصيد الحالي</th></tr></thead>
+      <tbody>
+      ${['TRY','USD','SYP'].map(cur=>{
+        const opening=parseFloat(settings['opening'+cur])||0;
+        const ins=entries.filter(e=>e.cur===cur&&e.type==='in').reduce((s,e)=>s+(parseFloat(e.amt)||0),0);
+        const outs=entries.filter(e=>e.cur===cur&&e.type==='out').reduce((s,e)=>s+(parseFloat(e.amt)||0),0);
+        const bal=opening+ins-outs;
+        const sym=cur==='TRY'?'₺':cur==='USD'?'$':'ل.س';
+        return `<tr>
+          <td><strong>${cur} ${sym}</strong></td>
+          <td>${fmt(opening,cur)}</td>
+          <td style="color:var(--green);font-weight:600;">+${fmt(ins,cur)}</td>
+          <td style="color:var(--red);font-weight:600;">-${fmt(outs,cur)}</td>
+          <td style="font-weight:700;color:${bal>=0?'var(--green)':'var(--red)'};">${fmt(bal,cur)}</td>
+        </tr>`;
+      }).join('')}
+      </tbody>
+    </table></div>
+  </div>
+
+  <!-- MONTHLY BY CURRENCY -->
+  ${['TRY','USD','SYP'].map(cur=>{
+    const data=monthlyStats(cur);
+    const sym=cur==='TRY'?'₺':cur==='USD'?'$':'ل.س';
+    if(!data.length) return '';
+    return `<div class="card">
+      <div class="card-title">حركة شهرية — ${cur} ${sym}</div>
+      <div class="tbl-wrap"><table class="rep-table">
+        <thead><tr><th>الشهر</th><th>مقبوضات</th><th>مدفوعات</th><th>الصافي</th></tr></thead>
+        <tbody>
+        ${data.map(([ym,d])=>{
+          const [y,m]=ym.split('-');
+          const net=d.in-d.out;
+          return `<tr>
+            <td>${MONTHS[parseInt(m)-1]} ${y}</td>
+            <td style="color:var(--green);">+${fmt(d.in,cur)}</td>
+            <td style="color:var(--red);">-${fmt(d.out,cur)}</td>
+            <td style="font-weight:700;color:${net>=0?'var(--green)':'var(--red)'};">${fmt(net,cur)}</td>
+          </tr>`;
+        }).join('')}
+        </tbody>
+      </table></div>
+    </div>`;
+  }).join('')}
+
+  <!-- CATEGORY BREAKDOWN -->
+  <div class="card">
+    <div class="card-title">تفصيل حسب التصنيف</div>
+    ${cats.length===0?'<div class="empty">لا توجد بيانات</div>':
+    `<div class="tbl-wrap"><table class="rep-table">
+      <thead><tr><th>التصنيف</th><th>النوع</th><th>العملة</th><th>الإجمالي</th></tr></thead>
+      <tbody>
+      ${cats.map(r=>`<tr>
+        <td>${esc(r.cat)}</td>
+        <td style="color:${r.type==='in'?'var(--green)':'var(--red)'};">${r.type==='in'?'↓ مقبوض':'↑ مدفوع'}</td>
+        <td><span class="cur-${r.cur.toLowerCase()}">${r.cur}</span></td>
+        <td style="font-weight:600;">${fmt(r.total,r.cur)}</td>
+      </tr>`).join('')}
+      </tbody>
+    </table></div>`}
+  </div>`;
+}
+
+function printReport(){
+  window.print();
+}
+
+// ══════════════════════════════
+// SETTINGS PAGE
+// ══════════════════════════════
+function renderSettings(){
+  const c=document.getElementById('settContent');
+  c.innerHTML=`
+  <div class="card">
+    <div class="card-title">الأرصدة الافتتاحية</div>
+    <div class="f"><label>رصيد ليرة تركية ₺</label>
+      <input type="number" id="sTRY" value="${settings.openingTRY||0}" placeholder="0"></div>
+    <div class="f"><label>رصيد دولار $</label>
+      <input type="number" id="sUSD" value="${settings.openingUSD||0}" placeholder="0"></div>
+    <div class="f"><label>رصيد ليرة سورية ل.س</label>
+      <input type="number" id="sSYP" value="${settings.openingSYP||0}" placeholder="0"></div>
+    <button class="btn btn-navy" onclick="saveSettingsForm()">💾 حفظ الأرصدة</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">النسخ الاحتياطي</div>
+    <button class="btn btn-navy" style="width:100%;justify-content:center;margin-bottom:8px;" onclick="doBackup()">📤 تصدير البيانات</button>
+    <button class="btn btn-out" style="width:100%;justify-content:center;" onclick="document.getElementById('importFile').click()">📥 استيراد البيانات</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="doImport(event)">
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color:var(--red);">خطر — حذف البيانات</div>
+    <button class="btn btn-red" onclick="clearAll()">🗑️ حذف كل الحركات</button>
+  </div>`;
+}
+
+function saveSettingsForm(){
+  settings.openingTRY=parseFloat(document.getElementById('sTRY').value)||0;
+  settings.openingUSD=parseFloat(document.getElementById('sUSD').value)||0;
+  settings.openingSYP=parseFloat(document.getElementById('sSYP').value)||0;
+  saveSettings(); updateHeader();
+  alert('✓ تم حفظ الأرصدة الافتتاحية');
+}
+
+function doBackup(){
+  const data={entries,settings,ts:new Date().toISOString()};
+  const json=JSON.stringify(data,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const file=new File([blob],`sandoq-backup-${today()}.json`,{type:'application/json'});
+  if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+    navigator.share({title:'صندوق — نسخة احتياطية',files:[file]}).catch(()=>{});
+  } else {
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=`sandoq-backup-${today()}.json`;a.click();URL.revokeObjectURL(url);
+  }
+}
+
+function doImport(ev){
+  const file=ev.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!Array.isArray(data.entries)) throw new Error('ملف غير صحيح');
+      if(!confirm(`سيتم استبدال ${entries.length} حركة بـ ${data.entries.length} حركة. متابعة؟`)) return;
+      entries=data.entries; settings=data.settings||settings;
+      saveEntries(); saveSettings(); renderPage();
+      alert(`✓ تم الاستيراد — ${entries.length} حركة`);
+    }catch(err){ alert('✗ الملف غير صحيح: '+err.message); }
+    ev.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+function clearAll(){
+  if(!confirm('سيتم حذف جميع الحركات نهائياً. متابعة؟')) return;
+  entries=[]; saveEntries(); renderPage();
+}
+
+// ══════════════════════════════
+// FORM
+// ══════════════════════════════
+function openEdit(id){
+  const e=entries.find(x=>x.id===id); if(!e) return;
+  editId=id;
+  document.getElementById('formTitle').textContent='تعديل الحركة';
+  document.getElementById('fDesc').value=e.desc||'';
+  document.getElementById('fAmt').value=e.amt||'';
+  document.getElementById('fCur').value=e.cur||'USD';
+  document.getElementById('fRate').value=e.rate||1;
+  document.getElementById('fEquiv').value=e.equiv||'';
+  document.getElementById('fDate').value=e.date||today();
+  document.getElementById('fCat').value=e.cat||'';
+  document.getElementById('fNote').value=e.note||'';
+  setType(e.type||'in');
+  document.getElementById('ovForm').classList.add('on');
+}
+function openForm(){
+  editId=null;
+  document.getElementById('formTitle').textContent='حركة جديدة';
+  document.getElementById('fDesc').value='';
+  document.getElementById('fAmt').value='';
+  document.getElementById('fCur').value='USD';
+  document.getElementById('fDate').value=today();
+  document.getElementById('fCat').value='';
+  document.getElementById('fNote').value='';
+  setType('in');
+  document.getElementById('fRate').value='1';
+  document.getElementById('fEquiv').value='';
+  document.getElementById('fExchAmtFrom').value='';
+  document.getElementById('fExchRate').value='';
+  document.getElementById('exchResult').textContent='—';
+  document.getElementById('ovForm').classList.add('on');
+}
+function closeForm(){ document.getElementById('ovForm').classList.remove('on'); }
+
+function setType(t){
+  entryType=t;
+  document.getElementById('typeIn').classList.toggle('on',t==='in');
+  document.getElementById('typeOut').classList.toggle('on',t==='out');
+  document.getElementById('typeExch').classList.toggle('on',t==='exch');
+  if(t==='exch'){
+    document.getElementById('typeExch').style.background='#FDF3E3';
+    document.getElementById('typeExch').style.borderColor='var(--orange)';
+    document.getElementById('typeExch').style.color='var(--orange)';
+  } else {
+    document.getElementById('typeExch').style.background='';
+    document.getElementById('typeExch').style.borderColor='var(--orange)';
+    document.getElementById('typeExch').style.color='var(--orange)';
+  }
+  document.getElementById('exchSection').style.display=t==='exch'?'block':'none';
+  // hide main amount/cur if exch
+  document.querySelector('#fAmt').closest('.frow').style.display=t==='exch'?'none':'grid';
+}
+
+function calcExch(){
+  const from=parseFloat(document.getElementById('fExchAmtFrom').value)||0;
+  const rate=parseFloat((document.getElementById('fExchRate').value||'').replace(',','.'))||0;
+  const toCur=document.getElementById('fExchTo').value;
+  const result=from*rate;
+  const fmtComma=(n)=>n.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2}); document.getElementById('exchResult').textContent=result>0?fmtComma(result):'—';
+}
+
+// ── SAVED NAMES ──
+function getSavedNames(){
+  return JSON.parse(localStorage.getItem('sandoq_names')||'[]');
+}
+function saveNameToList(name){
+  if(!name) return;
+  const names=getSavedNames();
+  if(!names.includes(name)){ names.unshift(name); if(names.length>50) names.pop(); localStorage.setItem('sandoq_names',JSON.stringify(names)); }
+}
+function calcEquiv(){
+  const amt = parseFloat(document.getElementById('fAmt').value)||0;
+  const cur = document.getElementById('fCur').value;
+  const rate = parseFloat((document.getElementById('fRate').value||'1').replace(',','.'))||1;
+  let usd = 0;
+  if(cur==='USD') usd = amt;
+  else usd = amt / rate;
+  document.getElementById('fEquiv').value = usd > 0 ? usd.toFixed(2) : '';
+}
+function showDescSuggestions(){
+  const val=document.getElementById('fDesc').value.trim().toLowerCase();
+  const box=document.getElementById('descDrop');
+  if(!box) return;
+  if(val.length<1){box.style.display='none';return;}
+  const names=getSavedNames().filter(n=>n.toLowerCase().includes(val)).slice(0,8);
+  if(!names.length){box.style.display='none';return;}
+  box.innerHTML=names.map(n=>`<div class="acitem" onmousedown="pickDesc('${n.replace(/'/g,"\'")}')"> ${n}</div>`).join('');
+  box.style.display='block';
+}
+function hideDescSuggestions(){ setTimeout(()=>{ const b=document.getElementById('descDrop'); if(b) b.style.display='none'; },150); }
+function pickDesc(n){ document.getElementById('fDesc').value=n; const b=document.getElementById('descDrop'); if(b) b.style.display='none'; }
+
+function saveEntry(){
+  const desc=document.getElementById('fDesc').value.trim();
+  if(!desc){ alert('يرجى إدخال البيان'); return; }
+
+  if(entryType==='exch'){
+    const amtFrom=parseFloat(document.getElementById('fExchAmtFrom').value);
+    const rate=parseFloat((document.getElementById('fExchRate').value||'').replace(',','.'));
+    const curFrom=document.getElementById('fExchFrom').value;
+    const curTo=document.getElementById('fExchTo').value;
+    if(!amtFrom||amtFrom<=0||!rate||rate<=0){ alert('يرجى إدخال المبلغ وسعر الصرف'); return; }
+    if(curFrom===curTo){ alert('يجب أن تكون العملتان مختلفتين'); return; }
+    const amtTo=amtFrom*rate;
+    const date=document.getElementById('fDate').value||today();
+    const note=document.getElementById('fNote').value.trim();
+    const cat='تصريف';
+    // Entry 1: مدفوع بالعملة الأولى
+    saveNameToList(desc);
+    entries.push({id:genId(),type:'out',desc:`تصريف: ${desc}`,amt:amtFrom,cur:curFrom,date,cat,note:`سعر الصرف: ${rate} — ${note}`});
+    // Entry 2: مقبوض بالعملة الثانية
+    entries.push({id:genId(),type:'in',desc:`تصريف: ${desc}`,amt:amtTo,cur:curTo,date,cat,note:`سعر الصرف: ${rate} — ${note}`});
+    saveEntries(); closeForm(); renderPage();
+    return;
+  }
+
+  const amt=parseFloat(document.getElementById('fAmt').value);
+  if(!amt||amt<=0){ alert('يرجى إدخال مبلغ صحيح'); return; }
+  const rate = parseFloat((document.getElementById('fRate').value||'1').replace(',','.'))||1;
+  const equiv = parseFloat(document.getElementById('fEquiv').value)||0;
+  const entry={
+    id:editId||genId(), type:entryType,
+    desc, amt,
+    cur:document.getElementById('fCur').value,
+    rate, equiv,
+    date:document.getElementById('fDate').value||today(),
+    cat:document.getElementById('fCat').value,
+    note:document.getElementById('fNote').value.trim(),
+  };
+  if(editId){ const i=entries.findIndex(e=>e.id===editId);if(i!==-1)entries[i]=entry; }
+  else entries.push(entry);
+  saveNameToList(desc);
+  saveEntries(); closeForm(); renderPage();
+}
+
+// ══════════════════════════════
+// DELETE
+// ══════════════════════════════
+function askDel(id){ delId=id; document.getElementById('cfmOv').classList.add('on'); }
+function closeCfm(){ document.getElementById('cfmOv').classList.remove('on'); delId=null; }
+function confirmDel(){ entries=entries.filter(e=>e.id!==delId); saveEntries(); closeCfm(); renderPage(); }
+
+// ══════════════════════════════
+// STATEMENT PAGE
+// ══════════════════════════════
+let stmtName = '';
+let stmtCur = 'all';
+
+function buildStmtResultsHTML(){
+  let filtered = stmtName ? entries.filter(e=>e.desc&&e.desc.includes(stmtName)) : [];
+  if(stmtCur!=='all') filtered=filtered.filter(e=>e.cur===stmtCur);
+  filtered=[...filtered].sort((a,b)=>a.date>b.date?1:-1);
+
+  if(!stmtName) return '<div class="empty"><div class="empty-ic">📑</div>ابحث عن اسم لعرض كشف حسابه</div>';
+  if(!filtered.length) return '<div class="empty"><div class="empty-ic">🔍</div>لا توجد حركات بهذا الاسم</div>';
+
+  return `
+  <div class="stat-grid" style="margin-bottom:10px;">
+    <div class="stat-card in"><div class="stat-v" style="color:var(--green);">${filtered.filter(e=>e.type==='in').length}</div><div class="stat-l">مقبوضات</div></div>
+    <div class="stat-card out"><div class="stat-v" style="color:var(--red);">${filtered.filter(e=>e.type==='out').length}</div><div class="stat-l">مدفوعات</div></div>
+  </div>
+  <button class="btn btn-navy" style="width:100%;justify-content:center;margin-bottom:12px;" onclick="printStmt()">🖨️ طباعة الكشف</button>
+  <div id="stmtPrintArea">
+  <div class="card" style="margin-bottom:10px;">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px;">${esc(stmtName)}</div>
+    <div style="font-size:12px;color:var(--sub);">${filtered.length} حركة | من ${filtered[0]?.date||''} إلى ${filtered[filtered.length-1]?.date||''}</div>
+  </div>
+  <div class="tbl-wrap">
+  <table class="rep-table">
+    <thead><tr><th>التاريخ</th><th>النوع</th><th>العملة</th><th>المبلغ</th><th>ما يعادل $</th><th>ملاحظة</th></tr></thead>
+    <tbody>
+    ${filtered.map(e=>`<tr onclick="openEdit('${e.id}')" style="cursor:pointer;" onmouseover="this.style.background='#FDF8EC'" onmouseout="this.style.background=''">
+      <td>${e.date}</td>
+      <td style="color:${e.type==='in'?'var(--green)':'var(--red)'};">${e.type==='in'?'↓ مقبوض':'↑ مدفوع'}</td>
+      <td><span class="cur-${e.cur.toLowerCase()}">${e.cur}</span></td>
+      <td style="font-weight:600;color:${e.type==='in'?'var(--green)':'var(--red)'};">${e.type==='in'?'+':'-'}${fmt(e.amt,e.cur)}</td>
+      <td style="font-size:12px;color:var(--usd);font-weight:600;">${e.cur==='USD'?'$'+parseFloat(e.amt).toFixed(2):(e.equiv?'$'+parseFloat(e.equiv).toFixed(2):'—')}</td>
+      <td style="font-size:12px;color:var(--sub);">${esc(e.note||'—')}</td>
+    </tr>`).join('')}
+    </tbody>
+    <tfoot>
+      ${(()=>{
+        const curs=[...new Set(filtered.map(e=>e.cur))];
+        const equivIn=filtered.reduce((s,e)=>s+(e.type==='in'?(e.cur==='USD'?parseFloat(e.amt)||0:parseFloat(e.equiv)||0):0),0);
+        const equivOut=filtered.reduce((s,e)=>s+(e.type==='out'?(e.cur==='USD'?parseFloat(e.amt)||0:parseFloat(e.equiv)||0):0),0);
+        const equivNet=equivIn-equivOut;
+
+        // Row 1: count + currency breakdown
+        const curSummary=curs.map(cur=>{
+          const ins=filtered.filter(e=>e.type==='in'&&e.cur===cur).reduce((s,e)=>s+(parseFloat(e.amt)||0),0);
+          const outs=filtered.filter(e=>e.type==='out'&&e.cur===cur).reduce((s,e)=>s+(parseFloat(e.amt)||0),0);
+          const net=ins-outs;
+          const sym=cur==='TRY'?'₺':cur==='USD'?'$':'ل.س';
+          return `${cur} ${sym}: <span style="color:${net>=0?'#6EDBA8':'#FF8A8A'};font-weight:700;">${net>=0?'+':''}${net.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})}</span>`;
+        }).join(' &nbsp;|&nbsp; ');
+
+        return `
+        <tr style="background:var(--navy);">
+          <td colspan="6" style="color:var(--gold);font-weight:700;text-align:center;padding:10px 12px;">
+            إجمالي ${filtered.length} حركة &nbsp; — &nbsp; ${curSummary}
+          </td>
+        </tr>
+        <tr style="background:#0a1428;">
+          <td colspan="3" style="color:rgba(255,255,255,.5);font-size:11px;text-align:left;padding:8px 12px;">الصافي بالدولار:</td>
+          <td style="color:#6EDBA8;font-weight:700;">+$${equivIn.toFixed(2)}</td>
+          <td style="color:${equivNet>=0?'#6EDBA8':'#FF8A8A'};font-weight:700;">$${equivNet.toFixed(2)}</td>
+          <td style="color:#FF8A8A;font-weight:700;">-$${equivOut.toFixed(2)}</td>
+        </tr>`;
+      })()}
+    </tfoot>
+  </table></div></div>`;
+}
+
+function renderStmt(){
+  const c=document.getElementById('stmtContent');
+  c.innerHTML=`
+  <div class="card">
+    <div class="card-title">اختر اسم الحركة</div>
+    <div style="position:relative;margin-bottom:10px;">
+      <input type="text" id="stmtSearch" placeholder="ابحث عن اسم..." value="${esc(stmtName)}"
+        autocomplete="off"
+        oninput="stmtSearchChange(this.value)"
+        onfocus="stmtSearchChange(this.value)"
+        style="width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:inherit;background:var(--bg);outline:none;">
+      <div id="stmtDrop" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1.5px solid var(--gold);border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.15);z-index:500;max-height:220px;overflow-y:auto;margin-top:3px;"></div>
+    </div>
+    <div class="ftabs" style="margin-bottom:0;">
+      <button class="ftab${stmtCur==='all'?' on':''}" onclick="setStmtCur('all')">الكل</button>
+      <button class="ftab${stmtCur==='USD'?' on':''}" onclick="setStmtCur('USD')">$ دولار</button>
+      <button class="ftab${stmtCur==='TRY'?' on':''}" onclick="setStmtCur('TRY')">₺ ليرة</button>
+      <button class="ftab${stmtCur==='SYP'?' on':''}" onclick="setStmtCur('SYP')">ل.س سوري</button>
+    </div>
+  </div>
+  <div id="stmtResults">${buildStmtResultsHTML()}</div>`;
+}
+
+function stmtSearchChange(v){
+  stmtName=v;
+  const drop=document.getElementById('stmtDrop');
+  if(drop){
+    const names=getSavedNames().filter(n=>n.toLowerCase().includes(v.toLowerCase())).slice(0,10);
+    if(names.length){
+      drop.innerHTML=names.map(n=>`<div class="acitem" onmousedown="pickStmtName('${n.replace(/'/g,"\'")}')"> ${esc(n)}</div>`).join('');
+      drop.style.display='block';
+    } else {
+      drop.style.display='none';
+    }
+  }
+  renderResultsOnly();
+}
+
+function renderResultsOnly(){
+  // Re-render only the results section below, not the search input itself
+  const resultsEl = document.getElementById('stmtResults');
+  if(resultsEl) resultsEl.innerHTML = buildStmtResultsHTML();
+}
+
+function pickStmtName(n){
+  stmtName=n;
+  document.getElementById('stmtSearch').value=n;
+  const drop=document.getElementById('stmtDrop');
+  if(drop) drop.style.display='none';
+  renderResultsOnly();
+}
+
+function setStmtCur(c){ stmtCur=c; renderStmt(); }  // full re-render OK here (tabs need active state)
+
+function printStmt(){
+  const area=document.getElementById('stmtPrintArea');
+  if(!area){ alert('لا توجد بيانات لطباعتها'); return; }
+
+  // Use a hidden iframe with its own document for reliable printing/PDF export
+  let iframe = document.getElementById('printFrame');
+  if(iframe) iframe.remove();
+  iframe = document.createElement('iframe');
+  iframe.id = 'printFrame';
+  iframe.style.cssText = 'position:fixed;top:-10000px;left:-10000px;width:0;height:0;border:none;';
+  document.body.appendChild(iframe);
+
+  const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
+  <title>كشف حساب — ${esc(stmtName)}</title>
+  <style>
+    @page { margin: 15mm; }
+    body{font-family:Arial,Tahoma,sans-serif;padding:0;margin:0;direction:rtl;color:#0F1D38;font-size:13px;}
+    .hd{text-align:center;margin-bottom:16px;border-bottom:2px solid #C8A84B;padding-bottom:10px;}
+    .hd h2{margin:0 0 4px;font-size:20px;}
+    .hd .sub{color:#666;font-size:12px;}
+    table{width:100%;border-collapse:collapse;margin-top:10px;}
+    th{background:#0F1D38;color:#C8A84B;padding:8px;text-align:right;font-size:12px;}
+    td{padding:7px 8px;border-bottom:1px solid #eee;font-size:12px;}
+    tfoot td{font-weight:700;border-top:2px solid #ccc;background:#f5f5f5;}
+  </style></head><body>
+  <div class="hd"><h2>📦 قلم — صندوق</h2><div class="sub">كشف حساب</div></div>
+  ${area.innerHTML}
+  </body></html>`;
+
+  const doc = iframe.contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+
+  iframe.onload = function(){
+    setTimeout(()=>{
+      try{
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      }catch(e){
+        alert('تعذر فتح نافذة الطباعة. على الآيفون: افتح قائمة المشاركة ثم اختر "طباعة" أو "حفظ كـ PDF".');
+      }
+    }, 250);
+  };
+}
+function closePrintArea(){
+  document.getElementById('printArea').style.display='none';
+  document.getElementById('printArea').innerHTML='';
+  document.body.style.overflow='';
+}
+
+// INIT
+renderPage();
+</script>
+<div id="printArea" style="display:none;position:fixed;inset:0;background:#fff;z-index:1000;overflow-y:auto;padding:0;"></div>
+</body>
+</html>
